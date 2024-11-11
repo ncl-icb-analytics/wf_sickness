@@ -34,3 +34,6 @@ ipykernel==6.29.4
 nbformat==5.10.4
 toml==0.10.2
 pathlib2==2.3.6
+
+# Other packages
+python-dotenv==1.0.1

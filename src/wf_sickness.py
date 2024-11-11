@@ -1,11 +1,12 @@
 import pandas as pd
+import numpy as np
 import os
 import toml
 
 from datetime import datetime
 from dotenv import load_dotenv
 from os import getenv
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, MetaData, text, insert
 from sqlalchemy.orm import sessionmaker
 
 #Functions
@@ -93,6 +94,9 @@ def process_benchmarking_data(df_in, settings):
     #Drop the region_code column
     df.drop("region_code", axis=1, inplace=True)
 
+    #Replace NaNs with None
+    df = df.replace({np.nan: None})
+
     #Add a current timestamp to the data
     df["date_upload"] = datetime.today()
 
@@ -120,6 +124,7 @@ def upload_data(df, dataset, settings):
 
     #Upload the processed data
     sql_schema = settings["sql_schema"]
+    batch_size = 200
     
     ##Delete existing overlapping data to allow for re-uploading
     data_daterange = df["date_data"].unique()
@@ -127,18 +132,34 @@ def upload_data(df, dataset, settings):
         raise Warning(("Multiple dates were found in the data.\n"
                       "This process does not replace existing data in the "
                       "destination for files with multiple dates."))
+            
+    rows = df.to_dict(orient="records")
+
+    metadata = MetaData(schema=sql_schema)
+    metadata.reflect(bind=engine)
+    sqlalc_table = metadata.tables[sql_schema + '.' + sql_table]
+
+    with engine.connect() as con:
+
+        #If there is only a single date in the data
+        if len(data_daterange) == 1:
+            #Create delete query to remove existing data for this data point
+            del_query = (f"DELETE FROM "
+                        f"[{sql_database}].[{sql_schema}].[{sql_table}] "
+                        f"WHERE date_data = '{data_daterange[0]}'")
     
-    if len(data_daterange) == 1:
-        del_query = (f"DELETE FROM "
-                     f"[{sql_database}].[{sql_schema}].[{sql_table}] "
-                     f"WHERE date_data = '{data_daterange[0]}'")
+            #Delete existing data from the destination
+            con.execute(text(del_query))
         
+        #Group the data into batches and upload
+        for i in range(0, len(rows), batch_size):
+            batch = rows[i:i+batch_size]
+            result = con.execute(
+                insert(sqlalc_table),
+                batch
+            )
 
-    ##Upload the processed data
-    df.to_sql(sql_table, engine, schema=sql_schema, 
-              if_exists="append", index=False, method="multi",
-              chunksize=200)
-
+        con.commit()
 
 #Load the runtime settings
 settings = load_settings()
@@ -148,6 +169,8 @@ settings = load_settings()
 source_files = get_source_files()
 
 for sf in source_files:
+
+    print(sf)
 
     #Load the data
     df_source = pd.read_csv(sf)
