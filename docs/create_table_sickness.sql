@@ -1,8 +1,7 @@
 --CREATE TABLE STATEMENT--
 --For the main sickness data table
 CREATE TABLE [Data_Lab_NCL_Dev].[JakeK].[wf_sickness] (
-    --Date columns
-    date_extract DATETIME NOT NULL,
+    --Date column
     date_data DATE NOT NULL,
 
     --ICS + Organisation Columns
@@ -16,7 +15,10 @@ CREATE TABLE [Data_Lab_NCL_Dev].[JakeK].[wf_sickness] (
 
     --Metric Numerator and Denominator
     days_lost FLOAT,
-    days_available FLOAT
+    days_available FLOAT,
+
+    --Timestamp
+    date_upload DATETIME NOT NULL
 
     --Primary Key Restriction
     PRIMARY KEY (date_data, org_code, staffgroup)
