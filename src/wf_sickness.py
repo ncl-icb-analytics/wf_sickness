@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import os
+import re
 import toml
 
 from datetime import datetime
@@ -20,7 +21,7 @@ def load_settings():
     config = toml.load("./config.toml")
 
     settings = {
-
+        #SQL Connection settings
         "sql_address": getenv("SQL_ADDRESS"),
         "sql_database": config["database"]["sql_database"],
         "sql_schema": config["database"]["sql_schema"],
@@ -28,16 +29,80 @@ def load_settings():
         "sql_table_byreason": config["database"]["sql_table_byreason"],
         "sql_cooloff": config["database"]["sql_cooloff"],
 
+        #Volatile user settings
+        "filename_cleanse": True if (
+            getenv("SOURCE_CLEANSE") and getenv("SOURCE_CLEANSE") != "False"
+            ) else False,
         "data_archive": True if (
-            getenv("DATA_ARCHIVE") and getenv("DATA_ARCHIVE") != "False"
+            getenv("SOURCE_ARCHIVE") and getenv("SOURCE_ARCHIVE") != "False"
             ) else False,
         
-        "map_column": config["map_files"]["column_names"],
+        #Structure information
+        "source_directory": ("./" + config["struct"]["data_dir"] + 
+                             "/" + config["struct"]["source_dir"] + "/"),
+        "archive_directory": ("./" + config["struct"]["data_dir"] + "/" + 
+                              config["struct"]["archive_dir"] + "/"),
 
+        #Lookup / reference values
+        "map_column": config["map_files"]["column_names"],
         "region_code_london": config["codes"]["region_london"]
     }
 
     return settings
+
+#Function that renames the source file with a more appropiate filename
+def filename_cleanse(old_filename, settings):
+
+    #Get shortpath
+    src = settings["source_directory"]
+
+    #Determine file type (using filename, relies on assumption)
+    if "reason" in old_filename.lower():
+        file_type = "ByReason"
+    else:
+        file_type = "Benchmarking"
+
+    #Extract year and month from the file name
+    match = re.search(r'\b\d{4}\b', old_filename)
+    if not match:
+        raise Exception((f"Please ensure the source file {old_filename} "
+                         "has a proper name.\nThe source should contain a month"
+                         " and year in the form of 'March 2024' or '03 2024'"
+                         "\n Full details on source filenames are found in the " 
+                         "README.md file"))
+    
+    fn_year = match.group()
+    fn_year_idx = old_filename.find(fn_year)
+
+    #Extract the month from the file name
+    ## If the filename has already been cleansed then the month is after
+    if old_filename[fn_year_idx-2] == "-":
+        fn_month = old_filename[fn_year_idx + 5:].split(" ")[0][:2]
+    ## If the filename has not been cleansed then the month is before
+    else:
+        fn_month = old_filename[:fn_year_idx-1].split(" ")[-1]
+    
+    month_dict = {
+    "January": "01", "February": "02", "March": "03",
+    "April": "04", "May": "05", "June": "06",
+    "July": "07", "August": "08", "September": "09",
+    "October": "10", "November": "11", "December": "12"
+    }
+
+    if fn_month in month_dict.keys():
+        fn_month = month_dict[fn_month]
+
+    if fn_month not in month_dict.values():
+        raise Exception((f"Please ensure the source file {old_filename} "
+                         "has a proper name.\nThe source should contain a month"
+                         " and year in the form of 'March 2024' or '03 2024'"
+                         "\n Full details on source filenames are found in the " 
+                         "README.md file"))
+    
+    new_filename = f"Sickness {file_type} - " + fn_year +" "+ fn_month + ".csv"
+    os.rename(src + old_filename, src + new_filename)
+
+    return new_filename
 
 #Establish a connection to the database
 def db_connect(server_address, database, 
@@ -52,9 +117,9 @@ def db_connect(server_address, database,
     return engine
 
 #Return a list of all csv files in the data/current directory
-def get_source_files():
+def get_source_files(settings):
     #Get all files in the source data directory
-    data_dir = "./data/current/"
+    data_dir = settings["source_directory"]
     dir_list = os.listdir(data_dir)
 
     #Cleanse the list
@@ -71,7 +136,7 @@ def get_source_files():
         if not(sf.endswith(".csv")):
             print(f"Warning: {sf} is not a csv file and will not be processed.")
         else:
-            csv_files.append(data_dir + sf)
+            csv_files.append(sf)
 
     return csv_files
 
@@ -111,7 +176,7 @@ def process_benchmarking_data(df_in, settings):
     return df
 
 #Function to upload data for a given dataset
-def upload_data(df, dataset, settings):
+def upload_data(sf, df, dataset, settings):
 
     #Load destination table name
     try:
@@ -168,24 +233,31 @@ def upload_data(df, dataset, settings):
 
     #Archive the file after upload if enabled
     if settings["data_archive"]:
-        pass
+        active_dir = settings["source_directory"]
+        archive_dir = settings["archive_directory"]
+        os.rename(active_dir + sf, archive_dir + sf)
 
 #Load the runtime settings
 settings = load_settings()
 
 #Extract the data from the source
 ##Get the datafile(s)
-source_files = get_source_files()
+source_files = get_source_files(settings)
 
 for sf in source_files:
 
-    print(sf.split("\\")[-1])
+    if settings["filename_cleanse"]:
+        filename = filename_cleanse(sf, settings)
+    else:
+        filename = sf
+
+    print(filename)
 
     #Load the data
-    df_source = pd.read_csv(sf)
+    df_source = pd.read_csv(settings["source_directory"] + sf)
 
     #Transform the data
     df_processed = process_benchmarking_data(df_source, settings)
 
     #Load the data into the warehouse
-    upload_data(df_processed, "sickness", settings)
+    upload_data(filename, df_processed, "sickness", settings)
