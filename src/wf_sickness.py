@@ -28,7 +28,12 @@ def load_settings():
         "sql_table_byreason": config["database"]["sql_table_byreason"],
         "sql_cooloff": config["database"]["sql_cooloff"],
 
+        "data_archive": True if (
+            getenv("DATA_ARCHIVE") and getenv("DATA_ARCHIVE") != "False"
+            ) else False,
+        
         "map_column": config["map_files"]["column_names"],
+
         "region_code_london": config["codes"]["region_london"]
     }
 
@@ -161,6 +166,10 @@ def upload_data(df, dataset, settings):
 
         con.commit()
 
+    #Archive the file after upload if enabled
+    if settings["data_archive"]:
+        pass
+
 #Load the runtime settings
 settings = load_settings()
 
@@ -170,7 +179,7 @@ source_files = get_source_files()
 
 for sf in source_files:
 
-    print(sf)
+    print(sf.split("\\")[-1])
 
     #Load the data
     df_source = pd.read_csv(sf)
