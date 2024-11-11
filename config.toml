@@ -9,6 +9,13 @@ sql_table_byreason = "wf_byreason"
 
 sql_cooloff = 60
 
+["struct"]
+data_dir = "data"
+source_dir = "current"
+archive_dir = "archive"
+
+
+
 [map_files]
 column_names = "./data/column_map.csv"
 
