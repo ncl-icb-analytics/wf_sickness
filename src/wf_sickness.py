@@ -174,6 +174,13 @@ def process_benchmarking_data(df_in, settings):
     #Replace NaNs with None
     df = df.replace({np.nan: None})
 
+    #Fix issue with RNOH and CNWL ics_code
+    #In some NHSE datasets, RNOH is labelled as NWL and CNWL is labelled as NCL
+    df.loc[df["org_code"] == "RAN", "ics_code"] = "QMJ"
+    df.loc[df["org_code"] == "RAN", "ics_name"] = "North Central London"
+    df.loc[df["org_code"] == "RV3", "ics_code"] = "QRV"
+    df.loc[df["org_code"] == "RV3", "ics_name"] = "North West London"
+
     #Add a current timestamp to the data
     df["date_upload"] = datetime.today()
 
