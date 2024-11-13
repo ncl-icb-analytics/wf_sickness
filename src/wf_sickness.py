@@ -134,18 +134,14 @@ def get_source_files(settings):
 
     #Ensure all data is a csv file
     csv_files = []
-    reason_processing = False
 
     for sf in dir_list:
         if not(sf.endswith(".csv")):
             print(f"Warning: {sf} is not a csv file and will not be processed.")
         else:
-            if "reason" in sf.lower():
-                reason_processing = True
-
             csv_files.append(sf)
 
-    return csv_files, reason_processing
+    return csv_files
 
 #The NHSD Data files change over time
 def process_benchmarking_data(df_in, file_type, ics_lookup, settings):
@@ -200,10 +196,8 @@ def process_benchmarking_data(df_in, file_type, ics_lookup, settings):
     return df
 
 #Function to get the ICS mapping information
-def get_ics_lookup(reason_processing, settings):
-    if not reason_processing:
-        return None
-    
+def get_ics_lookup(settings):
+   
     #Set up Database Connection
     server_address = settings["sql_address"]
     sql_database = settings["sql_database"]
@@ -292,20 +286,22 @@ if settings["scrape_new_data"]:
     scrape_new_data(settings)
 
 ##Get the datafile(s)
-source_files, reason_processing = get_source_files(settings)
+source_files = get_source_files(settings)
 
-ics_lookup = get_ics_lookup(reason_processing, settings)
+ics_lookup = get_ics_lookup(settings)
 
 for sf in source_files:
 
     #Determine file type (using filename, relies on assumption)
     if "reason" in sf.lower():
         file_type = "ByReason"
+        file_cleanse = "by Reason"
     else:
         file_type = "Sickness"
+        file_cleanse = "Benchmarking"
 
     if settings["filename_cleanse"]:
-        filename = filename_cleanse(sf, file_type, settings)
+        filename = filename_cleanse(sf, file_cleanse, settings)
     else:
         filename = sf
 
