@@ -168,3 +168,4 @@ cython_debug/
 
 #Exceptions
 !/data/column_map.csv
+!/docs/md_img/
