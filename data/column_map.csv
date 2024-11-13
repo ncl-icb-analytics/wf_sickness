@@ -1,0 +1,11 @@
+source_name,output_name
+DATE,date_data
+ORG_CODE,org_code
+ORG_NAME,org_name
+STAFF_GROUP,staffgroup
+FTE_DAYS_LOST,days_lost
+FTE_DAYS_AVAILABLE,days_available
+NHSE_REGION_CODE,region_code
+NHSE_CODE,region_code
+REASON,reason_full
+FTE_DAYS_LOST_REASON,days_lost_reason
