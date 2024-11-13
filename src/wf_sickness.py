@@ -39,6 +39,7 @@ def load_settings():
         "data_archive": True if (
             getenv("SOURCE_ARCHIVE") and getenv("SOURCE_ARCHIVE") != "False"
             ) else False,
+        "scrape_mode": getenv("SOURCE_SCRAPE_MODE"),
         
         #Structure information
         "source_directory": ("./" + config["struct"]["data_dir"] + 
@@ -215,6 +216,13 @@ def get_ics_lookup(settings):
 
     return df_out
 
+def archive_file(filename, settings):
+
+    #Archive the file
+    active_dir = settings["source_directory"]
+    archive_dir = settings["archive_directory"]
+    os.rename(active_dir + filename, archive_dir + filename)
+
 #Function to upload data for a given dataset
 def upload_data(sf, df, dataset, settings):
 
@@ -273,9 +281,7 @@ def upload_data(sf, df, dataset, settings):
 
     #Archive the file after upload if enabled
     if settings["data_archive"]:
-        active_dir = settings["source_directory"]
-        archive_dir = settings["archive_directory"]
-        os.rename(active_dir + sf, archive_dir + sf)
+        archive_file(sf, settings)
 
 #Load the runtime settings
 settings = load_settings()
