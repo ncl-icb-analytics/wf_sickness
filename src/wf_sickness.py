@@ -30,6 +30,9 @@ def load_settings():
         "sql_cooloff": config["database"]["sql_cooloff"],
 
         #Volatile user settings
+        "scrape_new_data": True if (
+            getenv("SOURCE_SCRAPE") and getenv("SOURCE_SCRAPE") != "False"
+            ) else False,
         "filename_cleanse": True if (
             getenv("SOURCE_CLEANSE") and getenv("SOURCE_CLEANSE") != "False"
             ) else False,
@@ -49,6 +52,10 @@ def load_settings():
     }
 
     return settings
+
+#Use data scraping to fetch files directly from NHSD
+def scrape_new_data(settings):
+    pass
 
 #Function that renames the source file with a more appropiate filename
 def filename_cleanse(old_filename, settings):
@@ -241,6 +248,10 @@ def upload_data(sf, df, dataset, settings):
 settings = load_settings()
 
 #Extract the data from the source
+##If enabled, scrape new data from NHSD
+if settings["scrape_new_data"]:
+    scrape_new_data(settings)
+
 ##Get the datafile(s)
 source_files = get_source_files(settings)
 
