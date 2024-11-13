@@ -1,25 +1,56 @@
-# NCL sample project folder
+# Workforce Sickness
 
-This git repository contains a shell that should be used as the default structure for new projects
-in the analytical team.  It won't fit all circumstances perfectly, and you can make changes and issue a 
-pull request for new features / changes.
+This git repository contains code to process workforce sickness data using the [NHSD Sickness and Absence dataset]([https://digital.nhs.uk/data-and-information/publications/statistical/nhs-sickness-absence-rates]). The code performs a basic ETL process on the data available and uploads the data to the NCL data warehouse.
 
-The aim of this template is two-fold: firstly to give a common structure for analytical projects to aid
-reproducibility, secondly to allow for additional security settings as default to prevent accidental upload of files that should not be committed to Git and GitHub.
+## ChangeLog
 
-__Please update/replace this README file with one relevant to your project__
+### [1.0] - 13/11/2024
 
-## To use this template, please use the following practises:
-
-* Put any data files in the `data` folder.  This folder is explicitly named in the .gitignore file.  A further layer of security is that all xls, xlsx, csv and pdf files are also explicit ignored in the whole folder as well.  ___If you need to commit one of these files, you must use the `-f` (force) command in `commit`, but you must be sure there is no identifiable data.__
-* Save any documentation in the `docs` file.  This does not mean you should avoid commenting your code, but if you have an operating procedure or supporting documents, add them to this folder.
-* Please save all output: data, formatted tables, graphs etc. in the output folder.  This is also implicitly ignored by git, but you can use the `-f` (force) command in `commit` to add any you wish to publish to github.
+- Core functionality.
+- Relies on the source data being manually downloaded and saved in the data/current directory.
 
 
-### Please also consider the following:
-* Linting your code.  This is a formatting process that follows a rule set.  We broadly encourage the tidyverse standard, and recommend the `lintr` package.
-* Comment your code to make sure others can follow.
-* Consider your naming conventions: we recommend `snake case` where spaces are replaced by underscores and no capitals are use. E.g. `outpatient_referral_data`
+## First Time Installation
+
+Follow the NCL scripting onboarding document for guidance on installing python, and setting up a virtual environment.
+The onboarding document can be found [here]([https://nhs-my.sharepoint.com/:w:/r/personal/emily_baldwin20_nhs_net/Documents/Documents/Infrastructure/Skills%20Development/Onboarding%20resources/Scripting_Onboarding.docx?d=w7ff7aa3bbbea4dab90a85f1dd5e468ee&csf=1&web=1&e=BPdIKw]).
+
+Copy the .env into the WF_AHP_DATAPACK folder. The .env file can be found at: 
+`N:\Performance&Transformation\Performance\NELCSUNCLMTFS\_DATA\UEC and Productivity Team\Workforce\Code Resources\wf_sickness`
+
+## Usage
+
+There are two datasets maintained using this project:
+* Sickness - Overall sickness data using the "Benchmarking" data from NHSD. The benchmarking files on NHSD have the naming convention: `NHS Sickness Absence benchmarking tool, MONTH YEAR, Monthly data text file`
+![Image of the Benchmark file on NHSD](./docs/md_img/nhsd_benchmark.PNG "Benchmark file on NHSD")
+* By Reason - Sickness data split by reason for absence using "By Reason" data from NHSD. The By Reason files on NHSD have the naming convention: `NHS Sickness Absence by reason, staff group and organisation, MONTH YEAR, Monthly data text file`
+![Image of the By Reason file on NHSD](./docs/md_img/nhsd_byreason.PNG "By reason file on NHSD")
+
+Ahead of running the code, download the files containing the new data and save them to the data/current directory in this repo. The code detects what type of data is in the file from the filename using the assumption that the By Reason data has "reason" in the filename. If the file is renamed, make sure the Benchmark data files do not have "reason" in the filename and the By Reason data files do.
+
+After this is done the process for executing the code is:
+* Open the project directory.
+  * Open VS Code.
+  * Open a new folder (Ctrl+K Ctrl+O) and select the wf_sickness folder .
+* Enable the virtual environment (see the onboarding document linked in the First Time Installation section).
+* Execute the src/wf_sickness.py file either by opening the src/wf_sickness.py file in VSCode and using the Run arrow button in the top right of the window.
+* While executing, the code will print the progress of the code in the terminal by listing the file currently being processed.
+
+## User Settings
+The .env file in the project folder (if missing, refer to the First Time Installation section) contains a list of user settings that affect how the code is executed.
+* (Not yet implemented) SOURCE_SCRAPE: When True, the code will download the data from NHSD
+* (Not yet implemented) SOURCE_SCRAPE_MODE: Determines how the data scraping will select which files to download. There are 2 main modes:
+  * "Latest n": By setting the mode variable to this you can specify the code to download and process the last n months of data (i.e. "Latest 3" will download the last 3 months of data). You can set this to "Latest" to download only the most recent data.
+  * "UI": During the code execution, the user will be prompted to select files to process.
+* SOURCE_CLEANSE: When set to True, the code will rename the source data files to a standardised format.
+* SOURCE_ARCHIVE: When set to True, the code will move source files from the current folder to the archive folder after the data is processed.
+* SQL_ADDRESS: The address of the NCL data warehouse. Included in the .env file to prevent the address from being visible on github.
 
 
+## Licence
 This repository is dual licensed under the [Open Government v3]([https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/) & MIT. All code can outputs are subject to Crown Copyright.
+
+## Contact
+Jake Kealey - jake.kealey@nhs.net
+
+Project Link: https://github.com/ncl-icb-analytics/wf_sickness
