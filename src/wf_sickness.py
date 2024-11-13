@@ -48,6 +48,7 @@ def load_settings():
 
         #Lookup / reference values
         "map_column": config["map_files"]["column_names"],
+        "ics_lookup": config["map_files"]["ics_lookup"],
         "region_code_london": config["codes"]["region_london"]
     }
 
@@ -133,16 +134,21 @@ def get_source_files(settings):
 
     #Ensure all data is a csv file
     csv_files = []
+    reason_processing = False
+
     for sf in dir_list:
         if not(sf.endswith(".csv")):
             print(f"Warning: {sf} is not a csv file and will not be processed.")
         else:
+            if "reason" in sf.lower():
+                reason_processing = True
+
             csv_files.append(sf)
 
-    return csv_files
+    return csv_files, reason_processing
 
 #The NHSD Data files change over time
-def process_benchmarking_data(df_in, settings):
+def process_benchmarking_data(df_in, file_type, ics_lookup, settings):
  
     #Work using a clean copy of the data frame
     df = df_in.copy()
@@ -154,10 +160,9 @@ def process_benchmarking_data(df_in, settings):
     ##Apply the map on the column names
     df.rename(columns=df_map.set_index("source_name")["output_name"], 
               inplace=True)
+    
     ##Remove unused columns (columns not specified in the map file)
-    
     df = df[df.columns.intersection(df_map["output_name"].values)]
-    
 
     #Filter to London only
     region_code = settings["region_code_london"]
@@ -166,8 +171,18 @@ def process_benchmarking_data(df_in, settings):
     #Drop the region_code column
     df.drop("region_code", axis=1, inplace=True)
 
-    #Replace NaNs with None
+    #Replace Nans with None
     df = df.replace({np.nan: None})
+
+    #By Reason specific processing
+    if file_type == "ByReason":
+        #Split reason_full coloumn into code and description
+        df["reason_code"] = df["reason_full"].str[0:3]
+        df["reason_desc"] = df["reason_full"].str[4:]
+        df.drop(["reason_full"], axis=1, inplace=True)
+
+    #Add ics columns using the dictionary table
+    df = df.join(ics_lookup.set_index("org_code"), on="org_code")
 
     #Fix issue with RNOH and CNWL ics_code
     #In some NHSE datasets, RNOH is labelled as NWL and CNWL is labelled as NCL
@@ -184,12 +199,34 @@ def process_benchmarking_data(df_in, settings):
     
     return df
 
+#Function to get the ICS mapping information
+def get_ics_lookup(reason_processing, settings):
+    if not reason_processing:
+        return None
+    
+    #Set up Database Connection
+    server_address = settings["sql_address"]
+    sql_database = settings["sql_database"]
+
+    #Connect to the database
+    engine = db_connect(server_address, sql_database)
+
+    with engine.connect() as con:
+    
+        with open(settings["ics_lookup"]) as file:
+            sfw_query = text(file.read())
+            df_out = pd.read_sql_query(sfw_query, con)
+
+    df_out.drop("org_name", axis=1, inplace=True)
+
+    return df_out
+
 #Function to upload data for a given dataset
 def upload_data(sf, df, dataset, settings):
 
     #Load destination table name
     try:
-        sql_table = settings["sql_table_" + dataset]
+        sql_table = settings["sql_table_" + dataset.lower()]
     except:
         raise Exception((f"'sql_table_{dataset}' was not found in the"
                           "'[database]' section of the config.toml file."))
@@ -255,17 +292,17 @@ if settings["scrape_new_data"]:
     scrape_new_data(settings)
 
 ##Get the datafile(s)
-source_files = get_source_files(settings)
+source_files, reason_processing = get_source_files(settings)
+
+ics_lookup = get_ics_lookup(reason_processing, settings)
 
 for sf in source_files:
 
     #Determine file type (using filename, relies on assumption)
     if "reason" in sf.lower():
         file_type = "ByReason"
-        table_suffix = "sickness_byreason"
     else:
-        file_type = "Benchmarking"
-        table_suffix = "sickness"
+        file_type = "Sickness"
 
     if settings["filename_cleanse"]:
         filename = filename_cleanse(sf, file_type, settings)
@@ -275,10 +312,11 @@ for sf in source_files:
     print(filename)
 
     #Load the data
-    df_source = pd.read_csv(settings["source_directory"] + sf)
+    df_source = pd.read_csv(settings["source_directory"] + filename)
 
     #Transform the data
-    df_processed = process_benchmarking_data(df_source, file_type, settings)
+    df_processed = process_benchmarking_data(
+        df_source, file_type, ics_lookup, settings)
 
     #Load the data into the warehouse
-    upload_data(filename, df_processed, table_suffix, settings)
+    upload_data(filename, df_processed, file_type, settings)
