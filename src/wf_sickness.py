@@ -58,16 +58,10 @@ def scrape_new_data(settings):
     pass
 
 #Function that renames the source file with a more appropiate filename
-def filename_cleanse(old_filename, settings):
+def filename_cleanse(old_filename, file_type, settings):
 
     #Get shortpath
     src = settings["source_directory"]
-
-    #Determine file type (using filename, relies on assumption)
-    if "reason" in old_filename.lower():
-        file_type = "ByReason"
-    else:
-        file_type = "Benchmarking"
 
     #Extract year and month from the file name
     match = re.search(r'\b\d{4}\b', old_filename)
@@ -161,7 +155,8 @@ def process_benchmarking_data(df_in, settings):
     df.rename(columns=df_map.set_index("source_name")["output_name"], 
               inplace=True)
     ##Remove unused columns (columns not specified in the map file)
-    df = df[df_map["output_name"].values]
+    
+    df = df[df.columns.intersection(df_map["output_name"].values)]
     
 
     #Filter to London only
@@ -264,8 +259,16 @@ source_files = get_source_files(settings)
 
 for sf in source_files:
 
+    #Determine file type (using filename, relies on assumption)
+    if "reason" in sf.lower():
+        file_type = "ByReason"
+        table_suffix = "sickness_byreason"
+    else:
+        file_type = "Benchmarking"
+        table_suffix = "sickness"
+
     if settings["filename_cleanse"]:
-        filename = filename_cleanse(sf, settings)
+        filename = filename_cleanse(sf, file_type, settings)
     else:
         filename = sf
 
@@ -275,7 +278,7 @@ for sf in source_files:
     df_source = pd.read_csv(settings["source_directory"] + sf)
 
     #Transform the data
-    df_processed = process_benchmarking_data(df_source, settings)
+    df_processed = process_benchmarking_data(df_source, file_type, settings)
 
     #Load the data into the warehouse
-    upload_data(filename, df_processed, "sickness", settings)
+    upload_data(filename, df_processed, table_suffix, settings)
