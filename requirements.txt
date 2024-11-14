@@ -37,3 +37,5 @@ pathlib2==2.3.6
 
 # Other packages
 python-dotenv==1.0.1
+beautifulsoup4==4.12.3
+requests==2.32.3
