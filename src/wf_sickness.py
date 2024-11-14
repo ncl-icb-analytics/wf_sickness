@@ -12,6 +12,8 @@ from sqlalchemy import create_engine, MetaData, text, insert
 from sqlalchemy.orm import sessionmaker
 from tkinter import messagebox
 
+from utils.data_scraping import *
+
 #Global Variables
 overwrite_warning = True
 overwrite = True
