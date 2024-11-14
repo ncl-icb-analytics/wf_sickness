@@ -3,12 +3,18 @@ import numpy as np
 import os
 import re
 import toml
+import tkinter as tk
 
 from datetime import datetime
 from dotenv import load_dotenv
 from os import getenv
 from sqlalchemy import create_engine, MetaData, text, insert
 from sqlalchemy.orm import sessionmaker
+from tkinter import messagebox
+
+#Global Variables
+overwrite_warning = True
+overwrite = True
 
 #Functions
 
@@ -216,12 +222,100 @@ def get_ics_lookup(settings):
 
     return df_out
 
+def overwrite_prompt(filename):
+    
+    root = tk.Tk()
+    root.withdraw()
+
+    # Create a new top-level window
+    dialog = tk.Toplevel(root)
+    dialog.title("File already exists")
+    #dialog.geometry("500x150")
+
+    popup_font = ("Arial", 12)
+
+    # Add a description label
+    desc_text = f"""The file: "{filename}" already exists in the archive folder. 
+    \nDo you want to overwrite it?"""
+    label = tk.Label(dialog, text=desc_text, font=popup_font)
+    label.pack(padx = 20, pady=10)
+
+    # Variable to store checkbox state
+    apply_to_all_var = tk.BooleanVar()
+
+    # Add a checkbox
+    checkbox = tk.Checkbutton(dialog, 
+                              text="Apply my choice to all future conflicts", 
+                              variable=apply_to_all_var,
+                              font=popup_font)
+    checkbox.pack(pady=5)
+
+    # Variable to store the user's choice
+    result = tk.StringVar(value="")
+
+    # Function to handle button click and set result
+    def on_button_click(choice):
+        result.set(choice)
+        dialog.destroy()
+
+    # Create Yes and No buttons
+    yes_button = tk.Button(dialog, 
+                           text="Yes", 
+                           command=lambda: on_button_click(True),
+                           font=popup_font,
+                           height=1, width = 8)
+    no_button = tk.Button(dialog, 
+                          text="No", 
+                          command=lambda: on_button_click(False),
+                          font=popup_font,
+                          height=1, width = 8)
+    
+
+    # Pack the buttons
+    yes_button.pack(side="left", padx=50, pady=15)
+    no_button.pack(side="right", padx=50, pady=15)
+
+    # Allow the window to resize based on its content
+    dialog.update_idletasks()
+    dialog.resizable(False, False)  
+
+    # Wait for the dialog to close
+    dialog.wait_window()
+
+    #Check if the user used the "Apply to all" option
+    global overwrite_warning
+    overwrite_warning = not apply_to_all_var.get()
+
+    # Return the result and the checkbox state
+    return bool(int(result.get()))
+
+#Function that handles the file archiving
 def archive_file(filename, settings):
 
-    #Archive the file
+    #Load settings
     active_dir = settings["source_directory"]
     archive_dir = settings["archive_directory"]
-    os.rename(active_dir + filename, archive_dir + filename)
+
+    #Check for conflict
+    file_source = active_dir + filename
+    file_dest = archive_dir + filename
+
+    ##Conflict found
+    if os.path.isfile(file_dest):
+        #Check if the user should be prompted
+        global overwrite
+        if overwrite_warning:
+            overwrite = overwrite_prompt(filename)
+
+        #Check if the overwrite should occur
+        if overwrite:
+            os.remove(file_dest)
+            os.rename(file_source, file_dest)
+
+    ##No conflict, can archive as normal 
+    else:
+        #Archive the file
+        os.rename(file_source, file_dest)
 
 #Function to upload data for a given dataset
 def upload_data(sf, df, dataset, settings):
@@ -294,7 +388,10 @@ if settings["scrape_new_data"]:
 ##Get the datafile(s)
 source_files = get_source_files(settings)
 
+#Load the ICS lookup
 ics_lookup = get_ics_lookup(settings)
+
+print("\nBegin processing...\n")
 
 for sf in source_files:
 
@@ -322,3 +419,5 @@ for sf in source_files:
 
     #Load the data into the warehouse
     upload_data(filename, df_processed, file_type, settings)
+
+print("\nFinished processing.\n")
