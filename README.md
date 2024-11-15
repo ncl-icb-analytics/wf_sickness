@@ -63,3 +63,5 @@ This repository is dual licensed under the [Open Government v3]([https://www.nat
 Jake Kealey - jake.kealey@nhs.net
 
 Project Link: https://github.com/ncl-icb-analytics/wf_sickness
+
+*The code for data scraping was largely lifted from existing scripts by eddie.davison@nhs.net>*
