@@ -12,6 +12,8 @@ from sqlalchemy import create_engine, MetaData, text, insert
 from sqlalchemy.orm import sessionmaker
 from tkinter import messagebox
 
+from utils.data_scraping import *
+
 #Global Variables
 overwrite_warning = True
 overwrite = True
@@ -45,7 +47,7 @@ def load_settings():
         "data_archive": True if (
             getenv("SOURCE_ARCHIVE") and getenv("SOURCE_ARCHIVE") != "False"
             ) else False,
-        "scrape_mode": getenv("SOURCE_SCRAPE_MODE"),
+        "scrape_mode": getenv("SOURCE_SCRAPE_MODE").lower(),
         
         #Structure information
         "source_directory": ("./" + config["struct"]["data_dir"] + 
@@ -56,14 +58,34 @@ def load_settings():
         #Lookup / reference values
         "map_column": config["map_files"]["column_names"],
         "ics_lookup": config["map_files"]["ics_lookup"],
-        "region_code_london": config["codes"]["region_london"]
+        "region_code_london": config["codes"]["region_london"],
+
+        #Data scraping settings
+        "publication_name": config["data_scraping"]["publication_name"],
+        "target_files": config["data_scraping"]["target_files"]
     }
 
     return settings
 
 #Use data scraping to fetch files directly from NHSD
 def scrape_new_data(settings):
-    pass
+    target_publicaton = settings["publication_name"]
+    target_files = settings["target_files"]
+    target_dir = settings["source_directory"]
+    scrape_mode = settings["scrape_mode"]
+
+    if len(scrape_mode.split(" ")) > 1:
+        mode_type, mode_n = scrape_mode.split(" ")
+    else:
+        mode_type = scrape_mode
+        mode_n = 1
+
+    data_scrape(publication_name=target_publicaton, 
+                target_files=target_files, 
+                dest_dir=target_dir,
+                mode=mode_type,
+                mode_n=mode_n,
+                con_debug=True)
 
 #Function that renames the source file with a more appropiate filename
 def filename_cleanse(old_filename, file_type, settings):
@@ -109,7 +131,17 @@ def filename_cleanse(old_filename, file_type, settings):
                          "README.md file"))
     
     new_filename = f"Sickness {file_type} - " + fn_year +" "+ fn_month + ".csv"
-    os.rename(src + old_filename, src + new_filename)
+    
+    if old_filename == new_filename:
+        return old_filename
+
+    if os.path.isfile(src + new_filename):
+        print(f"Warning! {old_filename} will be renamed to {new_filename}",
+              " but this already exists. {old_filename} will not be processed",
+              " as the code does not know how to handle both.")
+        return False
+    else:
+        os.rename(src + old_filename, src + new_filename)
 
     return new_filename
 
@@ -222,6 +254,7 @@ def get_ics_lookup(settings):
 
     return df_out
 
+#Prompt the user to decide how to handle file name conflicts when archiving.
 def overwrite_prompt(filename):
     
     root = tk.Tk()
@@ -391,7 +424,7 @@ source_files = get_source_files(settings)
 #Load the ICS lookup
 ics_lookup = get_ics_lookup(settings)
 
-print("\nBegin processing...\n")
+print("\nBegin processing...")
 
 for sf in source_files:
 
@@ -408,16 +441,20 @@ for sf in source_files:
     else:
         filename = sf
 
-    print(filename)
+    #Check there was no conflict issue within the source data
+    ##(This can happen when attempting to cleasne the filename of a source file
+    ##and its new name matches another source file)
+    if filename:
+        print(filename)
 
-    #Load the data
-    df_source = pd.read_csv(settings["source_directory"] + filename)
+        #Load the data
+        df_source = pd.read_csv(settings["source_directory"] + filename)
 
-    #Transform the data
-    df_processed = process_benchmarking_data(
-        df_source, file_type, ics_lookup, settings)
+        #Transform the data
+        df_processed = process_benchmarking_data(
+            df_source, file_type, ics_lookup, settings)
 
-    #Load the data into the warehouse
-    upload_data(filename, df_processed, file_type, settings)
+        #Load the data into the warehouse
+        upload_data(filename, df_processed, file_type, settings)
 
 print("\nFinished processing.\n")

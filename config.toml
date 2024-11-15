@@ -20,3 +20,7 @@ ics_lookup = "./docs/ics_lookup.sql"
 
 [codes]
 region_london = "Y56"
+
+[data_scraping]
+publication_name = "nhs-sickness-absence-rates"
+target_files = ["NHS Sickness Absence benchmarking tool CSV", "NHS Sickness Absence by reason, staff group and organisation CSV"]
