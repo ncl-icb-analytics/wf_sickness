@@ -94,7 +94,7 @@ def scrape_new_data(settings):
                 target_files=target_files, 
                 dest_dir=target_dir,
                 mode=mode_type,
-                mode_n=mode_n,
+                mode_n=int(mode_n),
                 con_debug=True)
 
 #Function that renames the source file with a more appropiate filename
