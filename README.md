@@ -12,7 +12,7 @@ This git repository contains code to process workforce sickness data using the [
 ### [1.1] - 15/11/2024
 
 - Added ability to download source data through data scraping
-- Code works by downloading the last "n" releases for a given publications
+- Code works by downloading the last "n" releases for a given publication
 
 ## First Time Installation
 
