@@ -52,6 +52,8 @@ The .env file in the project folder (if missing, refer to the First Time Install
   * (NOT YET IMPLEMENTED) "UI": During the code execution, the user will be prompted to select files to process.
 * SOURCE_CLEANSE: When set to True, the code will rename the source data files to a standardised format.
 * SOURCE_ARCHIVE: When set to True, the code will move source files from the current folder to the archive folder after the data is processed.
+* OVERWRITE_WARNING: When set to True, the code will warn the user when attempting to archive a source file that already exists in the archive file and prompt the user on how to handle it.
+* OVERWRITE_DEFAULT: When OVERWRITE_WARNING is set to False, instead of prompting the user when an conflict is detected, the code will use this value as the default behaviour for deciding whether to overwrite during conflicts.
 * SQL_ADDRESS: The address of the NCL data warehouse. Included in the .env file to prevent the address from being visible on github.
 
 ## Licence
