@@ -72,13 +72,13 @@ def get_files_from_page(page, url="https://digital.nhs.uk"):
 
 def download_file_from_id(page_links, file_id):
     target_url = page_links[file_id]["url"]
-    print(target_url)
 
     res = requests.get(target_url)
     if res.status_code == 200:
         return res.content
     else:
-        print(f"Failed to download file. Status code: {res.status_code}")
+        print(f"Failed to download file with the following url:\n{target_url}.",
+              f"\nStatus code: {res.status_code}")
         return 0
 
 def save_file(content, page_links, file_id, dest_dir):
@@ -91,20 +91,24 @@ def save_file(content, page_links, file_id, dest_dir):
     with open(target_dest, "wb") as file:
         file.write(content)
 
-target_files = ["NHS Sickness Absence benchmarking tool CSV", 
-           "NHS Sickness Absence by reason, staff group and organisation CSV"]
-
-pages = get_last_n_pages(1, "nhs-sickness-absence-rates")
-#pages = get_last_n_pages(4, "general-and-personal-medical-services")
-
-for page in pages:
-    print(page)
-    res_page_links = get_files_from_page(page)
-
-    for target in target_files:
-
-        res_file = download_file_from_id(res_page_links, target)
-        
-        if res_file:
-            save_file(res_file, res_page_links, target, "./data/current/")
+def data_scrape(publication_name, target_files, 
+                dest_dir="./data/", mode="latest", mode_n=1, con_debug=True):
+    if con_debug:
+        print("Data scraping start...")
     
+    if mode == "latest":
+        pages = get_last_n_pages(mode_n, publication_name)
+    else:
+        raise Exception(f"The data scraping mode {mode} is not supported.")
+
+    for page in pages:
+        if con_debug:
+            print(page)
+        
+        res_page_links = get_files_from_page(page)
+
+        for target in target_files:
+            res_file = download_file_from_id(res_page_links, target)
+        
+            if res_file:
+                save_file(res_file, res_page_links, target, "./data/current/")
