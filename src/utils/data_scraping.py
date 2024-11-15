@@ -58,17 +58,38 @@ def get_files_from_page(page, url="https://digital.nhs.uk"):
             filename_clean = filename.replace("%20", " ").replace("%2C", ",")
             #print(filename_clean)
             try:
-                file_id, period = filename_clean.rsplit(",", 1)
+                file_id, period_ext = filename_clean.rsplit(",", 1)
+                period_ext_arr = period_ext.split(".")
+                relevant_files[file_id] = {"url":href, 
+                                           "period":period_ext_arr[0],
+                                           "ext":period_ext_arr[1]}
             except:
-                file_id = filename_clean.split(".")[0]
-
-            relevant_files[file_id] = href
-
+                file_id_ext = filename_clean.split(".")
+                relevant_files[file_id_ext[0]] = {"url":href, 
+                                                  "ext":file_id_ext[1]}
+                
     return relevant_files
 
 def download_file_from_id(page_links, file_id):
-    target_url = page_links[file_id]
+    target_url = page_links[file_id]["url"]
     print(target_url)
+
+    res = requests.get(target_url)
+    if res.status_code == 200:
+        return res.content
+    else:
+        print(f"Failed to download file. Status code: {res.status_code}")
+        return 0
+
+def save_file(content, page_links, file_id, dest_dir):
+    target_link = page_links[file_id]
+    file_period = target_link["period"]
+    file_ext = target_link["ext"]
+
+    target_dest = dest_dir + file_id + " -" + file_period + "." + file_ext
+    
+    with open(target_dest, "wb") as file:
+        file.write(content)
 
 target_files = ["NHS Sickness Absence benchmarking tool CSV", 
            "NHS Sickness Absence by reason, staff group and organisation CSV"]
@@ -78,8 +99,12 @@ pages = get_last_n_pages(1, "nhs-sickness-absence-rates")
 
 for page in pages:
     print(page)
-    res = get_files_from_page(page)
+    res_page_links = get_files_from_page(page)
 
     for target in target_files:
-        download_file_from_id(res, target)
+
+        res_file = download_file_from_id(res_page_links, target)
+        
+        if res_file:
+            save_file(res_file, res_page_links, target, "./data/current/")
     
