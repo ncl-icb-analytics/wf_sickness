@@ -91,7 +91,11 @@ def get_file_links_from_page(page, url="https://digital.nhs.uk"):
 def download_file_from_id(file_links, file_id):
 
     #Make a request for the file
-    target_url = file_links[file_id]["url"]
+    try:
+        target_url = file_links[file_id]["url"]
+    except:
+        print(f"'{file_id}' could not be found for this publication.")
+        return 0
     res = requests.get(target_url)
 
     #Check if the request was successful
