@@ -14,11 +14,11 @@ from tkinter import messagebox
 
 from utils.data_scraping import *
 
-#Global Variables
+##Global Variables
 overwrite_warning = True
 overwrite = True
 
-#Functions
+##Functions
 
 #Return an object containing all runtime settings
 def load_settings():
@@ -47,8 +47,14 @@ def load_settings():
         "data_archive": True if (
             getenv("SOURCE_ARCHIVE") and getenv("SOURCE_ARCHIVE") != "False"
             ) else False,
-        "scrape_mode": getenv("SOURCE_SCRAPE_MODE").lower(),
-        
+        "overwrite_warning": True if (
+            getenv("OVERWRITE_WARN") and getenv("OVERWRITE_WARN") != "False"
+            ) else False,
+        "overwrite_default": True if (
+            getenv("OVERWRITE_DEFAULT") 
+            and getenv("OVERWRITE_DEFAULT") != "False"
+            ) else False,
+
         #Structure information
         "source_directory": ("./" + config["struct"]["data_dir"] + 
                              "/" + config["struct"]["source_dir"] + "/"),
@@ -61,6 +67,7 @@ def load_settings():
         "region_code_london": config["codes"]["region_london"],
 
         #Data scraping settings
+        "scrape_mode": getenv("SOURCE_SCRAPE_MODE").lower(),
         "publication_name": config["data_scraping"]["publication_name"],
         "target_files": config["data_scraping"]["target_files"]
     }
@@ -74,12 +81,15 @@ def scrape_new_data(settings):
     target_dir = settings["source_directory"]
     scrape_mode = settings["scrape_mode"]
 
+    #Parse the specified SOURCE_SCRAPE_MODE
+    #Check if the given value is in the form "mode n" and if not set n to 1.
     if len(scrape_mode.split(" ")) > 1:
         mode_type, mode_n = scrape_mode.split(" ")
     else:
         mode_type = scrape_mode
         mode_n = 1
 
+    #Call the data scraping code
     data_scrape(publication_name=target_publicaton, 
                 target_files=target_files, 
                 dest_dir=target_dir,
@@ -120,9 +130,11 @@ def filename_cleanse(old_filename, file_type, settings):
     "October": "10", "November": "11", "December": "12"
     }
 
+    #If the month is written as the word, map it to the numeric value
     if fn_month in month_dict.keys():
         fn_month = month_dict[fn_month]
 
+    #If no valid month is found
     if fn_month not in month_dict.values():
         raise Exception((f"Please ensure the source file {old_filename} "
                          "has a proper name.\nThe source should contain a month"
@@ -130,11 +142,16 @@ def filename_cleanse(old_filename, file_type, settings):
                          "\n Full details on source filenames are found in the " 
                          "README.md file"))
     
+    #Derrive the cleansed file name
     new_filename = f"Sickness {file_type} - " + fn_year +" "+ fn_month + ".csv"
     
+    #If the file was already cleansed, no need to check for filename conflicts
     if old_filename == new_filename:
         return old_filename
 
+    #Make sure the new file name does not already exist as a source file
+    #In this case ignored the uncleansed source file as the code has no way of
+    #prioritising overlapping data beyond which was processed most recently.
     if os.path.isfile(src + new_filename):
         print(f"Warning! {old_filename} will be renamed to {new_filename}",
               " but this already exists. {old_filename} will not be processed",
@@ -174,6 +191,7 @@ def get_source_files(settings):
     #Ensure all data is a csv file
     csv_files = []
 
+    #Validate each source file
     for sf in dir_list:
         if not(sf.endswith(".csv")):
             print(f"Warning: {sf} is not a csv file and will not be processed.")
@@ -243,9 +261,9 @@ def get_ics_lookup(settings):
 
     #Connect to the database
     engine = db_connect(server_address, sql_database)
-
     with engine.connect() as con:
-    
+        
+        #Load the ICS Lookup sql script and store the results
         with open(settings["ics_lookup"]) as file:
             sfw_query = text(file.read())
             df_out = pd.read_sql_query(sfw_query, con)
@@ -417,6 +435,11 @@ settings = load_settings()
 ##If enabled, scrape new data from NHSD
 if settings["scrape_new_data"]:
     scrape_new_data(settings)
+
+#Set the overwrite settings
+overwrite_warning = settings["overwrite_warning"]
+if not overwrite_warning:
+    overwrite = settings["overwrite_default"]
 
 ##Get the datafile(s)
 source_files = get_source_files(settings)
