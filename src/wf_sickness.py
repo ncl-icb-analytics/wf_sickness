@@ -14,11 +14,11 @@ from tkinter import messagebox
 
 from utils.data_scraping import *
 
-#Global Variables
+##Global Variables
 overwrite_warning = True
 overwrite = True
 
-#Functions
+##Functions
 
 #Return an object containing all runtime settings
 def load_settings():
@@ -47,8 +47,14 @@ def load_settings():
         "data_archive": True if (
             getenv("SOURCE_ARCHIVE") and getenv("SOURCE_ARCHIVE") != "False"
             ) else False,
-        "scrape_mode": getenv("SOURCE_SCRAPE_MODE").lower(),
-        
+        "overwrite_warning": True if (
+            getenv("OVERWRITE_WARN") and getenv("OVERWRITE_WARN") != "False"
+            ) else False,
+        "overwrite_default": True if (
+            getenv("OVERWRITE_DEFAULT") 
+            and getenv("OVERWRITE_DEFAULT") != "False"
+            ) else False,
+
         #Structure information
         "source_directory": ("./" + config["struct"]["data_dir"] + 
                              "/" + config["struct"]["source_dir"] + "/"),
@@ -61,6 +67,7 @@ def load_settings():
         "region_code_london": config["codes"]["region_london"],
 
         #Data scraping settings
+        "scrape_mode": getenv("SOURCE_SCRAPE_MODE").lower(),
         "publication_name": config["data_scraping"]["publication_name"],
         "target_files": config["data_scraping"]["target_files"]
     }
@@ -417,6 +424,11 @@ settings = load_settings()
 ##If enabled, scrape new data from NHSD
 if settings["scrape_new_data"]:
     scrape_new_data(settings)
+
+#Set the overwrite settings
+overwrite_warning = settings["overwrite_warning"]
+if not overwrite_warning:
+    overwrite = settings["overwrite_default"]
 
 ##Get the datafile(s)
 source_files = get_source_files(settings)
