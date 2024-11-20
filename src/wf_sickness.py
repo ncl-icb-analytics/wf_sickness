@@ -465,7 +465,7 @@ for sf in source_files:
         filename = sf
 
     #Check there was no conflict issue within the source data
-    ##(This can happen when attempting to cleasne the filename of a source file
+    ##(This can happen when attempting to cleanse the filename of a source file
     ##and its new name matches another source file)
     if filename:
         print(filename)
