@@ -154,7 +154,7 @@ def filename_cleanse(old_filename, file_type, settings):
     #prioritising overlapping data beyond which was processed most recently.
     if os.path.isfile(src + new_filename):
         print(f"Warning! {old_filename} will be renamed to {new_filename}",
-              " but this already exists. {old_filename} will not be processed",
+              f" but this already exists. {old_filename} will not be processed",
               " as the code does not know how to handle both.")
         return False
     else:
@@ -229,7 +229,7 @@ def process_benchmarking_data(df_in, file_type, ics_lookup, settings):
 
     #By Reason specific processing
     if file_type == "ByReason":
-        #Split reason_full coloumn into code and description
+        #Split reason_full column into code and description
         df["reason_code"] = df["reason_full"].str[0:3]
         df["reason_desc"] = df["reason_full"].str[4:]
         df.drop(["reason_full"], axis=1, inplace=True)
