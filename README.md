@@ -4,22 +4,26 @@ This git repository contains code to process workforce sickness data using the [
 
 ## ChangeLog
 
-### [1.0] - 13/11/2024
+### [1.0.0] - 13/11/2024
 
 - Core functionality.
 - Relies on the source data being manually downloaded and saved in the data/current directory.
 
-### [1.1] - 15/11/2024
+### [1.1.0] - 15/11/2024
 
 - Added ability to download source data through data scraping
 - Code works by downloading the last "n" releases for a given publication
 
+#### [1.1.1] - 21/11/2024
+
+- Updated documentation for clarity
+
 ## First Time Installation
 
-Follow the NCL scripting onboarding document for guidance on installing python, and setting up a virtual environment.
-The onboarding document can be found [here]([https://nhs-my.sharepoint.com/:w:/r/personal/emily_baldwin20_nhs_net/Documents/Documents/Infrastructure/Skills%20Development/Onboarding%20resources/Scripting_Onboarding.docx?d=w7ff7aa3bbbea4dab90a85f1dd5e468ee&csf=1&web=1&e=BPdIKw]).
+Follow the NCL scripting onboarding document, Section 4.1 (this describes the process for a new project but is also applicable for cloning an existing project) for guidance on installing python, and setting up a virtual environment.
+The onboarding document can be found [here](https://nhs-my.sharepoint.com/:w:/r/personal/emily_baldwin20_nhs_net/Documents/Documents/Infrastructure/Skills%20Development/Onboarding%20resources/Scripting_Onboarding.docx?web=1):
 
-Copy the .env into the WF_AHP_DATAPACK folder. The .env file can be found at: 
+Copy the .env into the WF_SICKNESS folder of this project. The .env file can be found at: 
 `N:\Performance&Transformation\Performance\NELCSUNCLMTFS\_DATA\UEC and Productivity Team\Workforce\Code Resources\wf_sickness`
 
 ## Usage
@@ -29,6 +33,8 @@ There are two datasets maintained using this project:
 ![Image of the Benchmark file on NHSD](./docs/md_img/nhsd_benchmark.PNG "Benchmark file on NHSD")
 * By Reason - Sickness data split by reason for absence using "By Reason" data from NHSD. The By Reason files on NHSD have the naming convention: `NHS Sickness Absence by reason, staff group and organisation, MONTH YEAR, Monthly data text file`
 ![Image of the By Reason file on NHSD](./docs/md_img/nhsd_byreason.PNG "By reason file on NHSD")
+
+**BY DEFAULT SOURCE_SCRAPE WILL BE ENABLED**
 
 **If SOURCE_SCRAPE is NOT enabled** in the .env file:
 Ahead of running the code, download the files containing the new data and save them to the data/current directory in this repo. The code detects what type of data is in the file from the filename using the assumption that the By Reason data has "reason" in the filename. If the file is renamed, make sure the Benchmark data files do not have "reason" in the filename and the By Reason data files do.
@@ -64,4 +70,4 @@ Jake Kealey - jake.kealey@nhs.net
 
 Project Link: https://github.com/ncl-icb-analytics/wf_sickness
 
-*The code for data scraping was largely lifted from existing scripts by eddie.davison@nhs.net>*
+*The code for data scraping was largely lifted from existing scripts by eddie.davison@nhs.net*
