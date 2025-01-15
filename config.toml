@@ -9,7 +9,7 @@ sql_table_byreason = "wf_sickness_byreason"
 
 sql_cooloff = 60
 
-["struct"]
+[struct]
 data_dir = "data"
 source_dir = "current"
 archive_dir = "archive"
