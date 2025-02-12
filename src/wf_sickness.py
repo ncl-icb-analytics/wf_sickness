@@ -30,7 +30,7 @@ def load_settings():
 
     settings = {
         #SQL Connection settings
-        "sql_address": getenv("SQL_ADDRESS"),
+        "sql_dsn": config["database"]["sql_dsn"],
         "sql_database": config["database"]["sql_database"],
         "sql_schema": config["database"]["sql_schema"],
         "sql_table_sickness": config["database"]["sql_table_sickness"],
@@ -163,15 +163,17 @@ def filename_cleanse(old_filename, file_type, settings):
     return new_filename
 
 #Establish a connection to the database
-def db_connect(server_address, database, 
-               server_type="mssql", driver="SQL+Server"):
+def db_connect(dsn, database):
     
     #Create Connection String
-    conn_str = (f"{server_type}://{server_address}/{database}"
-                f"?trusted_connection=yes&driver={driver}")
+    conn_str = (f"mssql+pyodbc:///"
+                f"?odbc_connect=DSN={dsn};"
+                f"DATABASE={database};"
+                f"Trusted_Connection=yes;")
     
     #Create SQL Alchemy Engine object
     engine = create_engine(conn_str, use_setinputsizes=False)
+
     return engine
 
 #Return a list of all csv files in the data/current directory
@@ -256,11 +258,11 @@ def process_benchmarking_data(df_in, file_type, ics_lookup, settings):
 def get_ics_lookup(settings):
    
     #Set up Database Connection
-    server_address = settings["sql_address"]
+    dsn = settings["sql_dsn"]
     sql_database = settings["sql_database"]
 
     #Connect to the database
-    engine = db_connect(server_address, sql_database)
+    engine = db_connect(dsn, sql_database)
     with engine.connect() as con:
         
         #Load the ICS Lookup sql script and store the results
@@ -379,11 +381,11 @@ def upload_data(sf, df, dataset, settings):
                           "'[database]' section of the config.toml file."))
 
     #Set up Database Connection
-    server_address = settings["sql_address"]
+    dsn = settings["sql_dsn"]
     sql_database = settings["sql_database"]
 
     #Connect to the database
-    engine = db_connect(server_address, sql_database)
+    engine = db_connect(dsn, sql_database)
 
     #Upload the processed data
     sql_schema = settings["sql_schema"]
