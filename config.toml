@@ -1,6 +1,7 @@
 title = "WF SICKNESS"
 
 [database]
+sql_dsn = "SANDPIT"
 sql_database = "Data_Lab_NCL_Dev"
 sql_schema = "JakeK"
 
