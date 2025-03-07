@@ -28,7 +28,7 @@ Follow the NCL scripting onboarding document, Section 4.1 (this describes the pr
 The onboarding document can be found [here](https://nhs.sharepoint.com/:f:/r/sites/msteams_3c6e53/Shared%20Documents/Data%20Science?csf=1&web=1&e=ArWnMM):
 
 Copy the .env into the WF_SICKNESS folder of this project. The .env file can be found at: 
-`N:\Performance&Transformation\Performance\NELCSUNCLMTFS\_DATA\UEC and Productivity Team\Workforce\Code Resources\wf_sickness`
+`N:\Performance&Transformation\Performance\NELCSUNCLMTFS\_DATA\UEC and Productivity Team\Workforce\Datasets\Sickness`
 
 ## Usage
 
