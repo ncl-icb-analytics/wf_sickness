@@ -18,10 +18,14 @@ This git repository contains code to process workforce sickness data using the [
 
 - Updated documentation for clarity
 
+#### [1.1.2] - 12/02/2025
+
+- Replaced SQL connection from using the server address to using the DSN settings.
+
 ## First Time Installation
 
 Follow the NCL scripting onboarding document, Section 4.1 (this describes the process for a new project but is also applicable for cloning an existing project) for guidance on installing python, and setting up a virtual environment.
-The onboarding document can be found [here](https://nhs-my.sharepoint.com/:w:/r/personal/emily_baldwin20_nhs_net/Documents/Documents/Infrastructure/Skills%20Development/Onboarding%20resources/Scripting_Onboarding.docx?web=1):
+The onboarding document can be found [here](https://nhs.sharepoint.com/:f:/r/sites/msteams_3c6e53/Shared%20Documents/Data%20Science?csf=1&web=1&e=ArWnMM):
 
 Copy the .env into the WF_SICKNESS folder of this project. The .env file can be found at: 
 `N:\Performance&Transformation\Performance\NELCSUNCLMTFS\_DATA\UEC and Productivity Team\Workforce\Code Resources\wf_sickness`
@@ -60,7 +64,6 @@ The .env file in the project folder (if missing, refer to the First Time Install
 * SOURCE_ARCHIVE: When set to True, the code will move source files from the current folder to the archive folder after the data is processed.
 * OVERWRITE_WARNING: When set to True, the code will warn the user when attempting to archive a source file that already exists in the archive file and prompt the user on how to handle it.
 * OVERWRITE_DEFAULT: When OVERWRITE_WARNING is set to False, instead of prompting the user when an conflict is detected, the code will use this value as the default behaviour for deciding whether to overwrite during conflicts.
-* SQL_ADDRESS: The address of the NCL data warehouse. Included in the .env file to prevent the address from being visible on github.
 
 ## Licence
 This repository is dual licensed under the [Open Government v3]([https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/) & MIT. All code can outputs are subject to Crown Copyright.
