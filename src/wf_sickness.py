@@ -373,6 +373,9 @@ def archive_file(filename, settings):
 #Function to upload data for a given dataset
 def upload_data(sf, df, dataset, settings):
 
+    #Convert float columns to objects (Needed for dealing with NaNs)
+    df = df.astype(object).where(pd.notnull(df), None)
+
     #Load destination table name
     try:
         sql_table = settings["sql_table_" + dataset.lower()]
