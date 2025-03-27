@@ -26,7 +26,7 @@ WHERE
 	org_ics.[SK_OrganisationID] IN (440024, 440027, 440028, 440042, 440054) AND 
 	(
 		org_pro.[SK_OrganisationTypeID] IN ('41', '67') OR 
-		org_pro.[Organisation_Code] IN ('NQV', 'DEQ', 'AXA', 'NNV')
+		org_pro.[Organisation_Code] IN ('NQV', 'DEQ', 'AXA', 'NNV', 'G6V2S')
 	)
 ) OR
 --The organisation is a London ICB
